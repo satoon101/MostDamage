@@ -1,9 +1,13 @@
 # ../most_damage/info.py
 
+"""Provides/stores information about the plugin."""
+
 # =============================================================================
 # >> IMPORTS
 # =============================================================================
 # Source.Python Imports
+#   Cvars
+from cvars import ConVar
 #   Plugins
 from plugins.info import PluginInfo
 
@@ -18,4 +22,4 @@ info.version = '1.2'
 info.basename = 'most_damage'
 info.variable = info.basename + '_version'
 info.url = 'http://www.sourcepython.com/showthread.php?85'
-info.convar = ServerVar(info.variable, info.version, 0, info.name + ' Version')
+info.convar = ConVar(info.variable, info.version, 0, info.name + ' Version')
