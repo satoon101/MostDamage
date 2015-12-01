@@ -7,7 +7,7 @@
 # =============================================================================
 # Source.Python Imports
 #   Cvars
-from cvars import ConVar
+from cvars.public import PublicConVar
 #   Plugins
 from plugins.info import PluginInfo
 
@@ -22,4 +22,5 @@ info.version = '1.2'
 info.basename = 'most_damage'
 info.variable = info.basename + '_version'
 info.url = 'http://www.sourcepython.com/showthread.php?85'
-info.convar = ConVar(info.variable, info.version, 0, info.name + ' Version')
+info.convar = PublicConVar(
+    info.variable, info.version, 0, info.name + ' Version')
