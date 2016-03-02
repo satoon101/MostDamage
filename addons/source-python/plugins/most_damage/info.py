@@ -22,5 +22,4 @@ info.version = '1.2'
 info.basename = 'most_damage'
 info.variable = info.basename + '_version'
 info.url = 'http://www.sourcepython.com/showthread.php?85'
-info.convar = PublicConVar(
-    info.variable, info.version, 0, info.name + ' Version')
+info.convar = PublicConVar(info.variable, info.version, info.name + ' Version')

@@ -14,6 +14,7 @@ from events import Event
 from filters.players import PlayerIter
 #   Messages
 from messages import HintText
+from messages import HudDestination
 from messages import KeyHintText
 from messages import TextMsg
 #   Players
@@ -36,11 +37,9 @@ most_damage_strings = LangStrings(info.basename)
 
 # Get the message instances
 most_damage_messages = {
-    1: HintText(message=most_damage_strings[info.name]),
-    2: TextMsg(
-        message=most_damage_strings[info.name],
-        destination=TextMsg.HUD_PRINTCENTER),
-    4: KeyHintText(message=most_damage_strings[info.name]),
+    1: HintText(most_damage_strings[info.name]),
+    2: TextMsg(most_damage_strings[info.name], HudDestination.CENTER),
+    4: KeyHintText(most_damage_strings[info.name]),
 }
 
 # Create the user settings
@@ -50,7 +49,9 @@ user_settings = PlayerSettings(info.name, 'md')
 _human_players = PlayerIter('human')
 
 # Store the possible options
-_options = sorted(item for item in most_damage_strings if item.isdigit())
+_options = {int(
+    item.split(':')[1]): value for item, value in most_damage_strings.items(
+        ) if item.startswith('Option:')}
 
 
 # =============================================================================
@@ -61,14 +62,14 @@ with ConfigManager(info.basename) as config:
 
     # Create the default location convar
     default_location = config.cvar(
-        'md_default_location', '1', 0, most_damage_strings['Default Location'])
+        'md_default_location', 1, most_damage_strings['Default Location'])
 
     # Loop through the possible location options
-    for _item in _options:
+    for _item, _value in sorted(_options.items()):
 
         # Add the current option to the convar's text
-        default_location.Options.append('{0} = {1}'.format(
-            _item, most_damage_strings[_item].get_string()))
+        default_location.Options.append(
+            '{0} = {1}'.format(_item, _value.get_string()))
 
 
 # =============================================================================
@@ -80,7 +81,7 @@ class _MostDamage(dict):
     def __init__(self):
         """Create the user settings."""
         # Call super class' init
-        super(_MostDamage, self).__init__()
+        super().__init__()
 
         # Create the location user setting
         self.location_setting = user_settings.add_string_setting(
@@ -88,10 +89,10 @@ class _MostDamage(dict):
             most_damage_strings['Location'])
 
         # Loop through each location option
-        for item in _options:
+        for item, value in sorted(_options.items()):
 
             # Add the option to the user settings
-            self.location_setting.add_option(item, most_damage_strings[item])
+            self.location_setting.add_option(str(item), value)
 
     def __missing__(self, userid):
         """Add the userid to the dictionary with the default values."""
@@ -107,7 +108,7 @@ class _MostDamage(dict):
         if userid in self:
 
             # Remove the userid from the dictionary
-            super(_MostDamage, self).__delitem__(userid)
+            super().__delitem__(userid)
 
     def send_message(self):
         """Send messages to players depending on their individual setting."""
@@ -117,34 +118,18 @@ class _MostDamage(dict):
             # If not, no need to send any messages
             return
 
-        # Sort the players by number of kills
-        sorted_killers = sorted(
-            self, key=lambda userid: self[userid]['kills'], reverse=True)
+        # Sort the players by kills/damage
+        sorted_players = sorted(self, key=lambda userid: (
+            self[userid]['kills'], self[userid]['damage']), reverse=True)
 
-        # Get the most number of kills
-        most_kills = self[sorted_killers[0]]['kills']
+        # Get the userid of the most destructive player
+        top_userid = sorted_players[0]
 
-        # Get the players that had the most kills
-        top_killers = [
-            userid for userid in self
-            if self[userid]['kills'] == most_kills]
-
-        # Sort the players with the most kills by the damage they did
-        sorted_damage = sorted(
-            top_killers,
-            key=lambda userid: self[userid]['damage'], reverse=True)
-
-        # Get the most destructive player
-        top_player = Player(index_from_userid(sorted_damage[0]))
-
-        # Loop through the message types to add the tokens
-        for message in most_damage_messages.values():
-
-            # Set the tokens for the message
-            message.tokens = {
-                'name': top_player.name,
-                'kills': self[top_player.userid]['kills'],
-                'damage': self[top_player.userid]['damage']}
+        # Set the tokens for the message
+        tokens = {
+            'name': Player(index_from_userid(top_userid)).name,
+            'kills': self[top_userid]['kills'],
+            'damage': self[top_userid]['damage']}
 
         # Loop through all human player indexes
         for player in _human_players:
@@ -162,7 +147,7 @@ class _MostDamage(dict):
                     continue
 
                 # Send the message to the player
-                message.send(player.index)
+                message.send(player.index, **tokens)
 
 # Get the _MostDamage instance
 most_damage = _MostDamage()
@@ -190,7 +175,7 @@ def player_action(game_event):
         return
 
     # Is this player_death?
-    if game_event.get_name() == 'player_death':
+    if game_event.name == 'player_death':
 
         # Add a kill to the attacker's stats
         most_damage[attacker]['kills'] += 1
@@ -204,12 +189,8 @@ def player_action(game_event):
 
 @Event('player_disconnect')
 def player_disconnect(game_event):
-    """Called when a player disconnects from the server."""
-    # Get the player's userid
-    userid = game_event['userid']
-
-    # Remove the player from the dictionary
-    del most_damage[userid]
+    """Remove the player from the dictionary."""
+    del most_damage[game_event['userid']]
 
 
 @Event('round_start')
