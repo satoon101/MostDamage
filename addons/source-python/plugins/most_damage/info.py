@@ -5,21 +5,11 @@
 # =============================================================================
 # >> IMPORTS
 # =============================================================================
-# Source.Python Imports
-#   Cvars
-from cvars.public import PublicConVar
-#   Plugins
-from plugins.info import PluginInfo
+# Source.Python
+from plugins.manager import plugin_manager
 
 
 # =============================================================================
 # >> PLUGIN INFO
 # =============================================================================
-info = PluginInfo()
-info.name = 'Most Damage'
-info.author = 'Satoon101'
-info.version = '1.2'
-info.basename = 'most_damage'
-info.variable = info.basename + '_version'
-info.url = 'http://www.sourcepython.com/showthread.php?85'
-info.convar = PublicConVar(info.variable, info.version, info.name + ' Version')
+info = plugin_manager.get_plugin_info(__name__)

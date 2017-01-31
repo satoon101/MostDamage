@@ -5,27 +5,19 @@
 # =============================================================================
 # >> IMPORTS
 # =============================================================================
-# Source.Python Imports
-#   Config
+# Source.Python
 from config.manager import ConfigManager
-#   Events
 from events import Event
-#   Filters
 from filters.players import PlayerIter
-#   Messages
 from messages import HintText
 from messages import HudDestination
 from messages import KeyHintText
 from messages import TextMsg
-#   Players
 from players.entity import Player
-from players.helpers import index_from_userid
-#   Settings
 from settings.player import PlayerSettings
-#   Translations
 from translations.strings import LangStrings
 
-# Script Imports
+# Plugin
 from most_damage.info import info
 
 
@@ -33,17 +25,17 @@ from most_damage.info import info
 # >> GLOBAL VARIABLES
 # =============================================================================
 # Get the translations
-most_damage_strings = LangStrings(info.basename)
+most_damage_strings = LangStrings(info.name)
 
 # Get the message instances
 most_damage_messages = {
-    1: HintText(most_damage_strings[info.name]),
-    2: TextMsg(most_damage_strings[info.name], HudDestination.CENTER),
-    4: KeyHintText(most_damage_strings[info.name]),
+    1: HintText(most_damage_strings[info.verbose_name]),
+    2: TextMsg(most_damage_strings[info.verbose_name], HudDestination.CENTER),
+    4: KeyHintText(most_damage_strings[info.verbose_name]),
 }
 
 # Create the user settings
-user_settings = PlayerSettings(info.name, 'md')
+user_settings = PlayerSettings(info.verbose_name, 'md')
 
 # Get the human player index iterator
 _human_players = PlayerIter('human')
@@ -58,7 +50,7 @@ _options = {int(
 # >> CONFIGURATION
 # =============================================================================
 # Create the most_damage.cfg file and execute it upon __exit__
-with ConfigManager(info.basename) as config:
+with ConfigManager(info.name) as config:
 
     # Create the default location convar
     default_location = config.cvar(
@@ -127,7 +119,7 @@ class _MostDamage(dict):
 
         # Set the tokens for the message
         tokens = {
-            'name': Player(index_from_userid(top_userid)).name,
+            'name': Player.from_userid(top_userid).name,
             'kills': self[top_userid]['kills'],
             'damage': self[top_userid]['damage']}
 
@@ -170,8 +162,7 @@ def player_action(game_event):
         return
 
     # Was this a team inflicted?
-    if Player(index_from_userid(
-            attacker)).team == Player(index_from_userid(victim)).team:
+    if Player.from_userid(attacker).team == Player.from_userid(victim).team:
         return
 
     # Is this player_death?
