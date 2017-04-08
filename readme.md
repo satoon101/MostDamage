@@ -11,7 +11,7 @@ To install, simply download the current release from its [release thread](http:/
 
 Once you have installed MostDamage on your server, simply add the following to your autoexec.cfg file:
 ```
-sp load most_damage
+sp plugin load most_damage
 ```
 
 <br>
@@ -19,6 +19,18 @@ After having loaded the plugin once, a configuration file will have been created
 
 Edit that file to your liking.  The current default configuration file looks like:
 ```
+// Options
+//   * 0 = Off
+//   * 1 = HudHint
+//   * 2 = CenterMsg
+//   * 3 = HudHint & CenterMsg
+//   * 4 = KeyHint
+//   * 5 = HudHint & KeyHint
+//   * 6 = CenterMsg & KeyHint
+//   * 7 = HudHint, CenterMsg & KeyHint
+// Default Value: 1
+// Default placement of the most damage message
+   md_default_location 1
 ```
 
 <br>
