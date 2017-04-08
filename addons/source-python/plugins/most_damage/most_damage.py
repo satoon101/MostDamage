@@ -41,9 +41,11 @@ user_settings = PlayerSettings(info.verbose_name, 'md')
 _human_players = PlayerIter('human')
 
 # Store the possible options
-_options = {int(
-    item.split(':')[1]): value for item, value in most_damage_strings.items(
-        ) if item.startswith('Option:')}
+_options = {
+    int(item.split(':')[1]): value
+    for item, value in most_damage_strings.items()
+    if item.startswith('Option:')
+}
 
 
 # =============================================================================
@@ -54,14 +56,19 @@ with ConfigManager(info.name) as config:
 
     # Create the default location convar
     default_location = config.cvar(
-        'md_default_location', 1, most_damage_strings['Default Location'])
+        'md_default_location', 1, most_damage_strings['Default Location']
+    )
 
     # Loop through the possible location options
     for _item, _value in sorted(_options.items()):
 
         # Add the current option to the convar's text
         default_location.Options.append(
-            '{0} = {1}'.format(_item, _value.get_string()))
+            '{value} = {text}'.format(
+                value=_item,
+                text=_value.get_string()
+            )
+        )
 
 
 # =============================================================================
@@ -77,8 +84,10 @@ class _MostDamage(dict):
 
         # Create the location user setting
         self.location_setting = user_settings.add_string_setting(
-            'Location', default_location.get_string(),
-            most_damage_strings['Location'])
+            'Location',
+            default_location.get_string(),
+            most_damage_strings['Location']
+        )
 
         # Loop through each location option
         for item, value in sorted(_options.items()):
@@ -88,31 +97,51 @@ class _MostDamage(dict):
 
     def __missing__(self, userid):
         """Add the userid to the dictionary with the default values."""
-        # Get the userid's dictionary
         value = self[userid] = {'kills': 0, 'damage': 0}
-
-        # Return the dictionary
         return value
 
     def __delitem__(self, userid):
         """Verify the userid is in the dictionary before removing them."""
-        # Is the userid in the dictionary?
         if userid in self:
-
-            # Remove the userid from the dictionary
             super().__delitem__(userid)
+
+    def add_damage(self, game_event):
+        """Add the damage or kill for the player."""
+        attacker = game_event['attacker']
+        victim = game_event['userid']
+
+        # Is this self inflicted?
+        if attacker in (victim, 0):
+            return
+
+        # Was this a team inflicted?
+        attacker_team = Player.from_userid(attacker).team
+        victim_team = Player.from_userid(victim).team
+        if attacker_team == victim_team:
+            return
+
+        # Is this player_death?
+        if game_event.name == 'player_death':
+
+            # Add a kill to the attacker's stats
+            self[attacker]['kills'] += 1
+            return
+
+        # This is player_hurt, so add the damage
+        self[attacker]['damage'] += game_event['dmg_health']
 
     def send_message(self):
         """Send messages to players depending on their individual setting."""
         # Was any damage done this round?
         if not self:
-
-            # If not, no need to send any messages
             return
 
         # Sort the players by kills/damage
-        sorted_players = sorted(self, key=lambda userid: (
-            self[userid]['kills'], self[userid]['damage']), reverse=True)
+        sorted_players = sorted(
+            self,
+            key=lambda userid: (self[userid]['kills'], self[userid]['damage']),
+            reverse=True
+        )
 
         # Get the userid of the most destructive player
         top_userid = sorted_players[0]
@@ -121,7 +150,8 @@ class _MostDamage(dict):
         tokens = {
             'name': Player.from_userid(top_userid).name,
             'kills': self[top_userid]['kills'],
-            'damage': self[top_userid]['damage']}
+            'damage': self[top_userid]['damage']
+        }
 
         # Loop through all human player indexes
         for player in _human_players:
@@ -133,15 +163,9 @@ class _MostDamage(dict):
             for location, message in most_damage_messages.items():
 
                 # Does the current message need to be sent?
-                if not places & location:
+                if places & location:
+                    message.send(player.index, **tokens)
 
-                    # If not, continue to the next message
-                    continue
-
-                # Send the message to the player
-                message.send(player.index, **tokens)
-
-# Get the _MostDamage instance
 most_damage = _MostDamage()
 
 
@@ -149,48 +173,23 @@ most_damage = _MostDamage()
 # >> GAME EVENTS
 # =============================================================================
 @Event('player_hurt', 'player_death')
-def player_action(game_event):
-    """Called any time a player is hurt or killed."""
-    # Get the attacker's userid
-    attacker = game_event['attacker']
-
-    # Get the victim's userid
-    victim = game_event['userid']
-
-    # Is this self inflicted?
-    if attacker in (victim, 0):
-        return
-
-    # Was this a team inflicted?
-    if Player.from_userid(attacker).team == Player.from_userid(victim).team:
-        return
-
-    # Is this player_death?
-    if game_event.name == 'player_death':
-
-        # Add a kill to the attacker's stats
-        most_damage[attacker]['kills'] += 1
-
-        # Go no further
-        return
-
-    # This is player_hurt, so add the damage
-    most_damage[attacker]['damage'] += game_event['dmg_health']
+def _player_action(game_event):
+    most_damage.add_damage(game_event)
 
 
 @Event('player_disconnect')
-def player_disconnect(game_event):
+def _player_disconnect(game_event):
     """Remove the player from the dictionary."""
     del most_damage[game_event['userid']]
 
 
 @Event('round_start')
-def round_start(game_event):
+def _round_start(game_event):
     """Clear the dictionary each new round."""
     most_damage.clear()
 
 
 @Event('round_end')
-def round_end(game_event):
+def _round_end(game_event):
     """Send messages about most damage each end of round."""
     most_damage.send_message()
