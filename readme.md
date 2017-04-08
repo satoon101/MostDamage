@@ -7,7 +7,7 @@ This plugin shows which player had the most kills at the end of each round.  If 
 
 <br>
 ## Installation
-To install, simply download the current release from its [release thread](http://forums.sourcepython.com/showthread.php?64) and install in into the main directory on your server.
+To install, simply download the current release from its [release thread](https://forums.sourcepython.com/viewtopic.php?t=64) and install in into the main directory on your server.
 
 Once you have installed MostDamage on your server, simply add the following to your autoexec.cfg file:
 ```
