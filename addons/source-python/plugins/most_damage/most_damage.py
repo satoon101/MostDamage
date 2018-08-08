@@ -6,7 +6,6 @@
 # >> IMPORTS
 # =============================================================================
 # Source.Python
-from config.manager import ConfigManager
 from events import Event
 from filters.players import PlayerIter
 from messages import HintText
@@ -15,23 +14,21 @@ from messages import KeyHintText
 from messages import TextMsg
 from players.entity import Player
 from settings.player import PlayerSettings
-from translations.strings import LangStrings
 
 # Plugin
-from most_damage.info import info
+from .config import LOCATION_OPTIONS, default_location
+from .info import info
+from .strings import MESSAGE_STRINGS
 
 
 # =============================================================================
 # >> GLOBAL VARIABLES
 # =============================================================================
-# Get the translations
-most_damage_strings = LangStrings(info.name)
-
 # Get the message instances
 most_damage_messages = {
-    1: HintText(most_damage_strings[info.verbose_name]),
-    2: TextMsg(most_damage_strings[info.verbose_name], HudDestination.CENTER),
-    4: KeyHintText(most_damage_strings[info.verbose_name]),
+    1: HintText(MESSAGE_STRINGS[info.verbose_name]),
+    2: TextMsg(MESSAGE_STRINGS[info.verbose_name], HudDestination.CENTER),
+    4: KeyHintText(MESSAGE_STRINGS[info.verbose_name]),
 }
 
 # Create the user settings
@@ -39,36 +36,6 @@ user_settings = PlayerSettings(info.verbose_name, 'md')
 
 # Get the human player index iterator
 _human_players = PlayerIter('human')
-
-# Store the possible options
-_options = {
-    int(item.split(':')[1]): value
-    for item, value in most_damage_strings.items()
-    if item.startswith('Option:')
-}
-
-
-# =============================================================================
-# >> CONFIGURATION
-# =============================================================================
-# Create the most_damage.cfg file and execute it upon __exit__
-with ConfigManager(info.name) as config:
-
-    # Create the default location convar
-    default_location = config.cvar(
-        'md_default_location', 1, most_damage_strings['Default Location']
-    )
-
-    # Loop through the possible location options
-    for _item, _value in sorted(_options.items()):
-
-        # Add the current option to the convar's text
-        default_location.Options.append(
-            '{value} = {text}'.format(
-                value=_item,
-                text=_value.get_string()
-            )
-        )
 
 
 # =============================================================================
@@ -86,11 +53,11 @@ class _MostDamage(dict):
         self.location_setting = user_settings.add_string_setting(
             'Location',
             default_location.get_string(),
-            most_damage_strings['Location']
+            MESSAGE_STRINGS['Location']
         )
 
         # Loop through each location option
-        for item, value in sorted(_options.items()):
+        for item, value in sorted(LOCATION_OPTIONS.items()):
 
             # Add the option to the user settings
             self.location_setting.add_option(str(item), value)
