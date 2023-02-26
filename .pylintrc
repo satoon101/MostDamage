@@ -59,4 +59,4 @@ ignore-docstrings=yes
 
 
 [VARIABLES]
-dummy-variables-rgx=
+ignored-argument-names=game_event

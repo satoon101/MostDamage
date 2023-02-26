@@ -48,9 +48,4 @@ with ConfigManager(info.name) as config:
     for _item, _value in sorted(LOCATION_OPTIONS.items()):
 
         # Add the current option to the convar's text
-        default_location.Options.append(
-            '{value} = {text}'.format(
-                value=_item,
-                text=_value.get_string()
-            )
-        )
+        default_location.Options.append(f'{_item} = {_value.get_string()}')

@@ -133,6 +133,7 @@ class _MostDamage(dict):
                 if places & location:
                     message.send(player.index, **tokens)
 
+
 most_damage = _MostDamage()
 
 
