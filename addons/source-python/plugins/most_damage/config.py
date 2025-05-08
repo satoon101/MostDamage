@@ -12,13 +12,12 @@ from config.manager import ConfigManager
 from .info import info
 from .strings import CONFIG_STRINGS
 
-
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
 __all__ = (
-    'LOCATION_OPTIONS',
-    'default_location',
+    "LOCATION_OPTIONS",
+    "default_location",
 )
 
 
@@ -27,9 +26,9 @@ __all__ = (
 # =============================================================================
 # Store the possible options
 LOCATION_OPTIONS = {
-    int(item.split(':')[1]): value
+    int(item.split(":")[1]): value
     for item, value in CONFIG_STRINGS.items()
-    if item.startswith('Option:')
+    if item.startswith("Option:")
 }
 
 
@@ -41,11 +40,11 @@ with ConfigManager(info.name) as config:
 
     # Create the default location convar
     default_location = config.cvar(
-        'md_default_location', 1, CONFIG_STRINGS['Default Location']
+        "md_default_location", 1, CONFIG_STRINGS["Default Location"],
     )
 
     # Loop through the possible location options
     for _item, _value in sorted(LOCATION_OPTIONS.items()):
 
         # Add the current option to the convar's text
-        default_location.Options.append(f'{_item} = {_value.get_string()}')
+        default_location.Options.append(f"{_item} = {_value.get_string()}")
