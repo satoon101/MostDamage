@@ -48,7 +48,7 @@ class _MostDamage(dict):
         # Create the location user setting
         self.location_setting = user_settings.add_string_setting(
             "Location",
-            default_location.get_string(),
+            str(default_location),
             MESSAGE_STRINGS["Location"],
         )
 
