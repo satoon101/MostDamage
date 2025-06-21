@@ -1,1 +1,8 @@
 __pycache__/
+resource/**
+!resource/
+!resource/source-python/
+!resource/source-python/translations/
+!resource/source-python/translations/**/
+!resource/source-python/translations/**/*.ini
+resource/source-python/translations/**/*_server.ini
